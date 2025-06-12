@@ -1,0 +1,16 @@
+name: download
+
+on:
+  workflow_run:
+    workflows: ["artifact upload"]
+    types:
+      - completed
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download from artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build

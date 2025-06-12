@@ -1,0 +1,1 @@
+hi this is a file inside of a folder called test and i am using it as a sample to test how to use artifacts

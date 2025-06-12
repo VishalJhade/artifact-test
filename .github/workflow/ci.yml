@@ -1,0 +1,17 @@
+name: artifact upload
+
+on:
+  push:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Upload the file in test directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./test
