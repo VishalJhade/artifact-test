@@ -13,10 +13,11 @@ jobs:
       - name: Debug environment variables
         run: printenv
         
-      - name: Download artifact
+      - name: "Download build files"
         uses: actions/download-artifact@v4
         with:
           name: build
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: List downloaded files
         run: ls -R
