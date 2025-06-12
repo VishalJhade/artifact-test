@@ -10,6 +10,9 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug environment variables
+        run: printenv
+        
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
