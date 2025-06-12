@@ -1,23 +1,52 @@
-name: download
+name: "CD Pipeline"
 
 on:
   workflow_run:
-    workflows: ["artifact upload"]
+    workflows: ["Sample React CI Pipeline / Workflow"]  # replace with your CI workflow name
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
-  download:
+  deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Debug environment variables
-        run: printenv
-        
-      - name: "Download build files"
-        uses: actions/download-artifact@v4
-        with:
-          name: build
-          run-id: ${{ github.event.workflow_run.id }}
+    environment: production
 
-      - name: List downloaded files
-        run: ls -R
+    steps:
+      - name: "Setup nodejs"
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+
+      - name: "Setup vercel cli"
+        run: npm install -g vercel
+
+      - name: "Get artifact ID from workflow run"
+        id: get_artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARTIFACT_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts" \
+            | jq -r '.artifacts[] | select(.name=="build") | .id')
+
+          if [ -z "$ARTIFACT_ID" ]; then
+            echo "No artifact named 'build' found!"
+            exit 1
+          fi
+
+          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+
+      - name: "Download artifact ZIP"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -L -H "Authorization: token $GITHUB_TOKEN" \
+            -o build.zip \
+            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.get_artifact.outputs.ARTIFACT_ID }}/zip"
+
+      - name: "Extract artifact"
+        run: unzip build.zip
+
+      - name: "Deploy to vercel"
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --confirm --name=cicdproject
